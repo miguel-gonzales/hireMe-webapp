@@ -1,0 +1,262 @@
+openapi: 3.0.3
+info:
+  title: HireMe App MVP API
+  description: |
+    REST API contract for the HireMe application.
+    Provides stateless candidate ingestion for applicants and a basic session-authenticated
+    dashboard for recruiter administration and pipeline status management.
+    CV files are stored in Supabase Storage; the API exposes time-limited signed URLs for PDF preview.
+  version: 1.0.0
+servers:
+  - url: https://api.hireme-mvp.com/v1
+    description: Production Server
+  - url: http://localhost:8080/v1
+    description: Local Development Server
+
+paths:
+  /applications:
+    post:
+      summary: Submit a new candidate job application
+      description: |
+        Public stateless endpoint for candidates to submit their profile details along with a single PDF resume.
+        The file is uploaded to Supabase Storage (private `resumes` bucket); only the object path is stored in PostgreSQL.
+        The attachment is restricted strictly to PDF format up to 5MB.
+      operationId: submitApplication
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                  maxLength: 100
+                  example: Jane Doe
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                  example: jane.doe@example.com
+                phone:
+                  type: string
+                  maxLength: 30
+                  example: "+123456789"
+                age:
+                  type: integer
+                  minimum: 16
+                  maximum: 100
+                  example: 28
+                country:
+                  type: string
+                  maxLength: 100
+                  example: United States
+                city:
+                  type: string
+                  maxLength: 100
+                  example: New York
+                english_level:
+                  $ref: '#/components/schemas/EnglishLevel'
+                resume:
+                  type: string
+                  format: binary
+                  description: Mandatory CV attachment. Must be a PDF file up to 5MB.
+              required:
+                - full_name
+                - email
+                - phone
+                - age
+                - country
+                - city
+                - english_level
+                - resume
+      responses:
+        '201':
+          description: Application submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Application submitted successfully
+                  application:
+                    $ref: '#/components/schemas/Application'
+        '400':
+          description: Validation Error (e.g., missing CV, unsupported file format, invalid data)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/applications:
+    get:
+      summary: Get candidate dashboard roster
+      description: Restricted to recruiter admins. Fetches a list of all submitted candidate profiles.
+      operationId: listApplications
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: A list of candidate applications retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorized access due to missing or invalid session credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/applications/{id}:
+    get:
+      summary: View an applicant's complete profile
+      description: Displays full textual fields alongside a time-limited signed URL (`resume_url`) for opening or previewing the CV from Supabase Storage.
+      operationId: getApplicationById
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique UUID of the application record
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Complete candidate profile data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorized access
+        '404':
+          description: Application record not found
+
+  /admin/applications/{id}/status:
+    patch:
+      summary: Alter candidate application pipeline state
+      description: Allows a recruiter admin to transition an application explicitly through the atomic lifecycle engine.
+      operationId: updateApplicationStatus
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique UUID of the application record
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/ApplicationStatus'
+              required:
+                - status
+      responses:
+        '200':
+          description: State modification saved and reflected instantly
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '400':
+          description: Invalid status value provided
+        '401':
+          description: Unauthorized access
+        '404':
+          description: Application record not found
+
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_id
+      description: Basic cookie-based session token for authorized recruiter administrators.
+
+  schemas:
+    EnglishLevel:
+      type: string
+      description: Standardized discrete language proficiency tiers.
+      enum:
+        - "Beginner (A1/A2)"
+        - "Intermediate (B1/B2)"
+        - "Advanced (C1)"
+        - "Native / Fluent (C2)"
+      example: "Native / Fluent (C2)"
+
+    ApplicationStatus:
+      type: string
+      description: Atomic workflow pipeline locations.
+      enum:
+        - "In Review"
+        - "Accepted"
+        - "Rejected"
+      example: "In Review"
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d3b07384-d113-4c4e-9c8e-aa1d3e237890
+        full_name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          format: email
+          example: jane.doe@example.com
+        phone:
+          type: string
+          example: "+123456789"
+        age:
+          type: integer
+          example: 28
+        country:
+          type: string
+          example: United States
+        city:
+          type: string
+          example: New York
+        english_level:
+          $ref: '#/components/schemas/EnglishLevel'
+        resume_url:
+          type: string
+          format: uri
+          description: |
+            Time-limited signed URL generated from the stored Supabase Storage object path.
+            Returned on read operations so recruiters can open or preview the PDF; not persisted in the database.
+          example: https://your-project.supabase.co/storage/v1/object/sign/resumes/d3b07384-d113-4c4e-9c8e-aa1d3e237890/resume.pdf?token=...
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-06-11T16:55:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-06-11T16:55:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Invalid file format. Only PDF files are permitted."
