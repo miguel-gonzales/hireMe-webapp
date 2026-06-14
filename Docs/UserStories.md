@@ -20,7 +20,7 @@ This document translates the scoped MVP into development-ready functional criter
     And I fill in the "Age" with "28"
     And I select "United States" from the "Country" dropdown
     And I fill in the "City" with "New York"
-    And I select "Fluent" from the "English Level" dropdown
+    And I select "Native / Fluent (C2)" from the "English Level" dropdown
     And I attach a valid "resume.pdf" file
     And I click the "Submit Application" button
     Then I should see a success message saying "Application submitted successfully"

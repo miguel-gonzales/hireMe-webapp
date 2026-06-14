@@ -198,7 +198,16 @@ CREATE INDEX idx_applications_status_created ON applications(status, created_at 
 -- Optimize unique lookups on emails
 CREATE INDEX idx_applications_email ON applications(email);
 ```
+-- ==========================================
+-- 7. SEED INITIAL ADMINISTRATIVE USERS
+-- ==========================================
+INSERT INTO recruiting_users (email, password_hash)
+VALUES 
+    ('admin1@hireme-app.com', 'PENDING_INITIALIZATION'),
+    ('admin2@hireme-app.com', 'PENDING_INITIALIZATION')
+ON CONFLICT (email) DO NOTHING;
 
+-- This has to be initialized by the backend using bcrypt + ENV DEFAULT_ADMIN_PASSWORD
 ---
 
 ## 5. Security & Ingestion Considerations

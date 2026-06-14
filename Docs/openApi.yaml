@@ -14,6 +14,48 @@ servers:
     description: Local Development Server
 
 paths:
+
+# Add to paths in openApi.yaml:
+  /auth/login:
+    post:
+      summary: Authenticate recruiter admin
+      description: Validates pre-seeded administrator credentials and sets a session cookie.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin1@hireme-app.com
+                password:
+                  type: string
+                  format: password
+                  example: supersecretpassword
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Successfully authenticated. Session cookie assigned.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: session_id=abc123xyz; Path=/; HttpOnly; Secure; SameSite=Strict
+        '401':
+          description: Invalid email or password
+        '400':
+          description: Validation Error (e.g., missing email or password)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
   /applications:
     post:
       summary: Submit a new candidate job application
@@ -259,4 +301,6 @@ components:
       properties:
         error:
           type: string
-          example: "Invalid file format. Only PDF files are permitted."
+          oneOf:
+          - example: "A PDF resume is required"
+          - example: "Invalid file format. Only PDF files are permitted."
