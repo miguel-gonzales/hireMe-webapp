@@ -13,3 +13,9 @@ export async function loginHandler(request: FastifyRequest, reply: FastifyReply)
   session.user = { id: user.id, email: user.email };
   reply.send({ message: 'Login successful' });
 }
+
+export async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
+  const session = request.session as any;
+  session.user = null;
+  reply.send({ message: 'Logout successful' });
+}

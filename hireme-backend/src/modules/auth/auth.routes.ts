@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { loginHandler } from './auth.controller.js';
+import { loginHandler, logoutHandler } from './auth.controller.js';
 import { loginBodySchema, loginResponseSchema } from './auth.schema.js';
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
@@ -15,6 +15,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     },
     loginHandler
   );
+
+  fastify.post('/logout', { schema: { response: { 200: loginResponseSchema } } }, logoutHandler);
 };
 
 export default authRoutes;
