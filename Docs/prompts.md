@@ -26,3 +26,7 @@ All details should address configurations.
 The main goal is to have this documents as part of the Specifications to develop the app using any AI tool as assistant. Thus it must be clear, well structured, detailed and efficient.
 
 If any Clarification questions are needed, start by asking them and then move on with the task.
+
+### Github Copilot
+
+Follow this implementation plan, let's start by building the backend first.
