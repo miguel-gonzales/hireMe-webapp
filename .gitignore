@@ -1,3 +1,8 @@
 # Editor folders
 .vscode/
 .DS_Store
+
+node_modules/
+dist/
+config/.env
+.env

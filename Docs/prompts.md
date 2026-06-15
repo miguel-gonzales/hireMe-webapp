@@ -30,3 +30,5 @@ If any Clarification questions are needed, start by asking them and then move on
 ### Github Copilot
 
 Follow this implementation plan, let's start by building the backend first.
+
+The backend was implemented successfully, now let's build the frontend, follow the same implementation plan but take the frontend branch.
