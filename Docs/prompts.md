@@ -32,3 +32,5 @@ If any Clarification questions are needed, start by asking them and then move on
 Follow this implementation plan, let's start by building the backend first.
 
 The backend was implemented successfully, now let's build the frontend, follow the same implementation plan but take the frontend branch.
+
+Great! it's working as expected, I like the styles you added, following the same design add styles to the frontend, keep it simple modular and avoid inline styles.
