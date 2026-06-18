@@ -34,3 +34,7 @@ Follow this implementation plan, let's start by building the backend first.
 The backend was implemented successfully, now let's build the frontend, follow the same implementation plan but take the frontend branch.
 
 Great! it's working as expected, I like the styles you added, following the same design add styles to the frontend, keep it simple modular and avoid inline styles.
+
+**Tests**: 
+
+Create at 10 tests for the backend, the main purpose is to test the API calls and identify any edge cases that may arise during the usage, corrupt files, wrong format files, and proper responses.
