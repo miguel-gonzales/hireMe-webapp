@@ -11,17 +11,19 @@ export async function createApplicationHandler(request: FastifyRequest, reply: F
   const parts = request.parts();
   const fields: Record<string, string> = {};
   let resumePart: fastifyMultipart.MultipartFile | undefined;
+  let resumeChunk: Buffer | undefined;
 
   for await (const part of parts) {
     if (part.type === 'file') {
       resumePart = part;
+      resumeChunk = await part.toBuffer();
       continue;
     }
 
     fields[part.fieldname] = part.value as string;
   }
 
-  if (!resumePart) {
+  if (!resumePart || !resumeChunk) {
     reply.badRequest('A PDF resume is required');
     return;
   }
@@ -31,7 +33,7 @@ export async function createApplicationHandler(request: FastifyRequest, reply: F
     return;
   }
 
-  const chunk = await resumePart.toBuffer();
+  const chunk = resumeChunk;
 
   const englishLevels = [
     'Beginner (A1/A2)',

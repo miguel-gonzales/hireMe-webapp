@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "rm -rf dist && tsc",
     "start": "node dist/src/server.js",
-    "test": "node --experimental-vm-modules --import tsx/esm node:test src/**/*.test.ts",
+    "test": "node --experimental-vm-modules --import tsx/esm --test src/**/*.test.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src"
   },

@@ -8,9 +8,9 @@ import supabasePlugin from './plugins/supabase.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import applicationsRoutes from './modules/applications/applications.routes.js';
 
-export function buildApp() {
+export function buildApp(options: { supabaseClient?: any; logger?: any } = {}) {
   const app = fastify({
-    logger: true,
+    logger: options.logger ?? true,
   });
 
   app.register(sensiblePlugin);
@@ -18,7 +18,12 @@ export function buildApp() {
   app.register(sessionPlugin);
   app.register(corsPlugin);
   app.register(multipartPlugin);
-  app.register(supabasePlugin);
+
+  if (options.supabaseClient) {
+    app.decorate('supabase', options.supabaseClient);
+  } else {
+    app.register(supabasePlugin);
+  }
 
   app.register(authRoutes, { prefix: '/v1/auth' });
   app.register(applicationsRoutes, { prefix: '/v1' });
