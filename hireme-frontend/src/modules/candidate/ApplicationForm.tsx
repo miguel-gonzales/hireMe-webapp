@@ -34,12 +34,13 @@ type FormValues = z.infer<typeof Schema>
 export default function ApplicationForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValidating },
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
   })
@@ -47,6 +48,7 @@ export default function ApplicationForm() {
   async function onSubmit(values: FormValues) {
     setServerError(null)
     setSuccessMessage(null)
+    setIsUploading(true)
 
     const formData = new FormData()
     formData.append('full_name', values.full_name)
@@ -58,20 +60,24 @@ export default function ApplicationForm() {
     formData.append('english_level', values.english_level)
     formData.append('resume', values.resume[0])
 
-    const response = await fetch(`${env.API_BASE_URL}/applications`, {
-      method: 'POST',
-      body: formData,
-    })
+    try {
+      const response = await fetch(`${env.API_BASE_URL}/applications`, {
+        method: 'POST',
+        body: formData,
+      })
 
-    if (!response.ok) {
+      if (!response.ok) {
+        const result = await response.json().catch(() => null)
+        setServerError(result?.error ?? 'Submission failed')
+        return
+      }
+
       const result = await response.json().catch(() => null)
-      setServerError(result?.error ?? 'Submission failed')
-      return
+      setSuccessMessage(result?.message ?? 'Application submitted successfully')
+      reset()
+    } finally {
+      setIsUploading(false)
     }
-
-    const result = await response.json().catch(() => null)
-    setSuccessMessage(result?.message ?? 'Application submitted successfully')
-    reset()
   }
 
   return (
@@ -148,8 +154,8 @@ export default function ApplicationForm() {
           {errors.resume && <p className={styles.errorText} role="alert">{errors.resume.message}</p>}
         </div>
 
-        <button type="submit" className={styles.button} disabled={isSubmitting}>
-          {isSubmitting ? 'Submitting…' : 'Submit Application'}
+        <button type="submit" className={styles.button} disabled={isUploading}>
+          {isUploading ? 'Submitting…' : 'Submit Application'}
         </button>
       </form>
     </main>
